@@ -1,0 +1,17 @@
+{
+  "name": "juse-reoi-2026-backend",
+  "version": "1.0.0",
+  "description": "Google Apps Script backend for the J-USE REOI 2026 application form.",
+  "private": true,
+  "scripts": {
+    "login": "clasp login",
+    "create": "clasp create --type webapp --title \"J-USE REOI 2026 Backend\" --rootDir .",
+    "push": "clasp push --force",
+    "deploy": "clasp deploy --description \"J-USE REOI 2026 production\"",
+    "open": "clasp open",
+    "logs": "clasp logs"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.2"
+  }
+}

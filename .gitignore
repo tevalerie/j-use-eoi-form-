@@ -1,0 +1,26 @@
+# Local Node install (project-private — installed by Claude for clasp)
+.node/
+
+# npm dependencies (re-installable via `npm install` in apps-script/)
+apps-script/node_modules/
+apps-script/package-lock.json
+
+# clasp project metadata (contains your Apps Script ID — keep local)
+apps-script/.clasp.json
+apps-script/.clasprc.json
+
+# Claude Code local config (preview server, dev settings)
+.claude/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Schema build artefacts (auto-generated, regenerate with build-schema.sh)
+apps-script/schema.json
+
+# Test PDF downloads (temporary)
+juse-test-*.pdf

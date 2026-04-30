@@ -144,7 +144,7 @@ GitHub Pages rebuilds in ~30 seconds. Live form now POSTs to the Workspace deplo
 
 ## Step 7 — Test the migration (~3 min)
 
-1. Open <https://tevalerie.github.io/juse-reoi-2026/?prefill=1> in your browser
+1. Open <https://tevalerie.github.io/j-use-eoi-form-/?prefill=1> in your browser
 2. Submit a test application
 3. Confirm:
    - ✅ Both inboxes (`tellyonu@gmail.com` + `grants@efj.org.jm`) receive the email

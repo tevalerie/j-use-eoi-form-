@@ -2,7 +2,7 @@
 
 End-state: **one URL** that EFJ can embed in their website. Updates take seconds. Free, no maintenance.
 
-Your live URL will be: **`https://tevalerie.github.io/juse-reoi-2026/`**
+Your live URL will be: **`https://tevalerie.github.io/j-use-eoi-form-/`**
 
 ---
 
@@ -41,7 +41,7 @@ git commit -m "Initial commit — production J-USE REOI 2026 form + Apps Script 
 
 # Connect to your GitHub repo and push
 git branch -M main
-git remote add origin https://github.com/tevalerie/juse-reoi-2026.git
+git remote add origin https://github.com/tevalerie/j-use-eoi-form-.git
 git push -u origin main
 ```
 
@@ -51,12 +51,12 @@ When you run `git push`, a browser window will open asking you to authorise GitH
 
 ## Step 3 — Enable GitHub Pages (~30 seconds)
 
-1. In your browser, go to **`https://github.com/tevalerie/juse-reoi-2026/settings/pages`**
+1. In your browser, go to **`https://github.com/tevalerie/j-use-eoi-form-/settings/pages`**
 2. Under **Source**, select **Deploy from a branch**
 3. Under **Branch**, choose **`main`** and folder **`/ (root)`**
 4. Click **Save**
 5. Wait ~30 seconds. Refresh the page. You'll see a green banner:
-   > **Your site is live at https://tevalerie.github.io/juse-reoi-2026/**
+   > **Your site is live at https://tevalerie.github.io/j-use-eoi-form-/**
 
 That's your production URL. Anyone with the link can fill in the form.
 
@@ -64,7 +64,7 @@ That's your production URL. Anyone with the link can fill in the form.
 
 ## Step 4 — Test the live URL
 
-Open <https://tevalerie.github.io/juse-reoi-2026/> in any browser.
+Open <https://tevalerie.github.io/j-use-eoi-form-/> in any browser.
 
 You should see:
 - The landing page → auto-redirects to the application form within 1 second
@@ -79,7 +79,7 @@ Submit a test application end-to-end to confirm Apps Script is still wired corre
 
 Send the EFJ web team this URL:
 
-> **`https://tevalerie.github.io/juse-reoi-2026/`**
+> **`https://tevalerie.github.io/j-use-eoi-form-/`**
 
 They have two options for putting it on the EFJ site:
 
@@ -87,7 +87,7 @@ They have two options for putting it on the EFJ site:
 
 ```html
 <iframe
-  src="https://tevalerie.github.io/juse-reoi-2026/"
+  src="https://tevalerie.github.io/j-use-eoi-form-/"
   width="100%"
   height="900"
   style="border:0; max-width: 1000px; margin: 0 auto; display: block;"
@@ -99,7 +99,7 @@ They have two options for putting it on the EFJ site:
 ### Option B — Link button (form opens in a new tab)
 
 ```html
-<a href="https://tevalerie.github.io/juse-reoi-2026/"
+<a href="https://tevalerie.github.io/j-use-eoi-form-/"
    target="_blank"
    rel="noopener"
    style="display:inline-block; background:#2E8B57; color:white;

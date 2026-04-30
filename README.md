@@ -1,6 +1,6 @@
 # J-USE REOI 2026 Application System
 
-> **Live form:** [`https://tevalerie.github.io/juse-reoi-2026/`](https://tevalerie.github.io/juse-reoi-2026/) *(once GitHub Pages is enabled)*
+> **Live form:** [`https://tevalerie.github.io/j-use-eoi-form-/`](https://tevalerie.github.io/j-use-eoi-form-/) *(once GitHub Pages is enabled)*
 >
 > **Deadline:** May 3, 2026 (11:59 p.m. EST)
 > **Status:** Production — frontend, PDF renderer, and Google Apps Script backend all live.

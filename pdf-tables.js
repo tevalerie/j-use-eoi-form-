@@ -25,6 +25,202 @@
 'use strict';
 
 /**
+ * Derive the 6 Cross-Cutting Focus Lenses from data the applicant has
+ * already provided in the form. Used as a fallback when the application
+ * has no explicit focusLenses array (which is the case for every real
+ * applicant — the form has no UI for these fields). The prefilled
+ * sample/walkthrough still wins because it provides focusLenses directly.
+ *
+ * Each derivation rule produces a structured row:
+ *   { lensName, selectedOption, selectedLabel }
+ *   - lensName:       human-readable lens name (e.g. "Climate Additionality")
+ *   - selectedOption: short rating tag (High/Medium/Low/Intentional/etc.)
+ *   - selectedLabel:  one-line justification quoting the applicant's data
+ *
+ * @param {Object} data - Application data object (post-labelization)
+ * @returns {Array<Object>} Six derived lens rows.
+ */
+function deriveFocusLenses(data) {
+  function num(x) {
+    if (x === null || x === undefined || x === '') return null;
+    var n = Number(String(x).replace(/[^0-9.\-]/g, ''));
+    return isFinite(n) ? n : null;
+  }
+  function arrHas(arr, needle) {
+    if (!Array.isArray(arr)) return false;
+    var n = String(needle).toLowerCase();
+    return arr.some(function (s) { return String(s).toLowerCase().indexOf(n) >= 0; });
+  }
+  function strHas(s, needle) {
+    if (s === null || s === undefined) return false;
+    return String(s).toLowerCase().indexOf(String(needle).toLowerCase()) >= 0;
+  }
+
+  var rows = [];
+
+  // ---- 1. Climate Additionality -------------------------------------------
+  var jr = num(data.juseRequest);
+  var tc = num(data.totalCost);
+  var addRatio = (jr !== null && tc !== null && tc > 0) ? jr / tc : null;
+  var addOpt, addLbl;
+  if (addRatio === null) {
+    addOpt = 'Not assessable';
+    addLbl = 'Total cost or J-USE request not provided.';
+  } else if (addRatio >= 0.60) {
+    addOpt = 'High';
+    addLbl = 'J-USE grant is ' + Math.round(addRatio * 100) + '% of total project cost (catalytic — project unlikely to proceed at scale without it).';
+  } else if (addRatio >= 0.30) {
+    addOpt = 'Medium';
+    addLbl = 'J-USE grant is ' + Math.round(addRatio * 100) + '% of total project cost (leverage — meaningful but not the largest share).';
+  } else {
+    addOpt = 'Low';
+    addLbl = 'J-USE grant is ' + Math.round(addRatio * 100) + '% of total project cost (other capital is the primary driver).';
+  }
+  rows.push({ lensName: 'Climate Additionality', selectedOption: addOpt, selectedLabel: addLbl });
+
+  // ---- 2. Gender ----------------------------------------------------------
+  var gc = Array.isArray(data.genderConsiderations) ? data.genderConsiderations : [];
+  var gcCount = gc.length;
+  var hasWomenLed     = arrHas(gc, 'women-led') || arrHas(gc, 'women-majority');
+  var hasTargetedWomen= arrHas(gc, 'targeted activities for women');
+  var hasEqualAccess  = arrHas(gc, 'equal access');
+  var hasGenderAnalysis = arrHas(gc, 'gender analysis');
+  var hasGBV          = arrHas(gc, 'gbv') || arrHas(gc, 'gender-based violence');
+  var womenPct = num(data.womenPct);
+  var genderOpt, genderLbl;
+  if (gcCount === 0) {
+    genderOpt = 'Not addressed';
+    genderLbl = 'No gender considerations indicated.';
+  } else if (hasWomenLed || hasTargetedWomen || (hasGenderAnalysis && gcCount >= 3)) {
+    genderOpt = 'Intentional';
+    var pieces = [];
+    if (hasWomenLed) pieces.push('women-led / women-majority project');
+    if (hasTargetedWomen) pieces.push('targeted activities for women');
+    if (hasGenderAnalysis) pieces.push('gender analysis conducted');
+    if (hasGBV) pieces.push('GBV risk assessed');
+    genderLbl = pieces.join(' + ');
+    if (womenPct !== null) genderLbl += ' (' + womenPct + '% women beneficiaries).';
+    else genderLbl += '.';
+  } else if (hasEqualAccess || hasGenderAnalysis) {
+    genderOpt = 'Mainstreamed';
+    genderLbl = (hasGenderAnalysis ? 'Gender analysis conducted' : 'Equal access designed') +
+      (womenPct !== null ? ' — ' + womenPct + '% women beneficiaries.' : '.');
+  } else {
+    genderOpt = 'Limited';
+    genderLbl = 'One gender consideration selected (' + gc[0] + ').';
+  }
+  rows.push({ lensName: 'Gender', selectedOption: genderOpt, selectedLabel: genderLbl });
+
+  // ---- 3. Youth -----------------------------------------------------------
+  var tg = Array.isArray(data.targetGroups) ? data.targetGroups : [];
+  var youthInTarget = arrHas(tg, 'youth');
+  var youthPct = num(data.youthPct);
+  var youthOpt, youthLbl;
+  if (!youthInTarget) {
+    youthOpt = 'Not addressed';
+    youthLbl = 'Youth not selected as a target group.';
+  } else if (youthPct !== null && youthPct >= 50) {
+    youthOpt = 'Core';
+    youthLbl = 'Youth (18–35) in target groups AND ' + youthPct + '% of beneficiaries are youth.';
+  } else if (youthPct !== null && youthPct >= 25) {
+    youthOpt = 'Strong';
+    youthLbl = 'Youth in target groups; ' + youthPct + '% of beneficiaries are youth.';
+  } else {
+    youthOpt = 'Included';
+    youthLbl = 'Youth in target groups' +
+      (youthPct !== null ? ' (' + youthPct + '% of beneficiaries).' : '; specific share not stated.');
+  }
+  rows.push({ lensName: 'Youth', selectedOption: youthOpt, selectedLabel: youthLbl });
+
+  // ---- 4. Vulnerability ---------------------------------------------------
+  var vulnPct = num(data.vulnerablePct);
+  var lowIncomePct = num(data.lowIncomePct);
+  var hv = String(data.housingVulnerability || '').toLowerCase();
+  var hvDirect  = strHas(hv, 'direct') && !strHas(hv, 'indirect');
+  var hvPartial = strHas(hv, 'partial') || strHas(hv, 'indirect');
+  var vulnOpt, vulnLbl;
+  if (vulnPct === null && !hv) {
+    vulnOpt = 'Not assessable';
+    vulnLbl = 'Vulnerability metrics not provided.';
+  } else if ((vulnPct !== null && vulnPct >= 50) || hvDirect) {
+    vulnOpt = 'High';
+    var pieces2 = [];
+    if (vulnPct !== null) pieces2.push(vulnPct + '% vulnerable beneficiaries');
+    if (hvDirect) pieces2.push('direct housing vulnerability');
+    vulnLbl = pieces2.join(' + ') + '.';
+  } else if ((vulnPct !== null && vulnPct >= 25) || hvPartial) {
+    vulnOpt = 'Moderate';
+    var pieces3 = [];
+    if (vulnPct !== null) pieces3.push(vulnPct + '% vulnerable beneficiaries');
+    if (hvPartial) pieces3.push('partial housing vulnerability');
+    vulnLbl = pieces3.join(' + ') + '.';
+  } else {
+    vulnOpt = 'Low';
+    vulnLbl = 'Beneficiaries report low direct vulnerability' +
+      (vulnPct !== null ? ' (' + vulnPct + '%).' : '.');
+  }
+  rows.push({ lensName: 'Vulnerability', selectedOption: vulnOpt, selectedLabel: vulnLbl });
+
+  // ---- 5. Disability Inclusion -------------------------------------------
+  var an = String(data.accessibilityNeeds || '').toLowerCase();
+  var can = String(data.capacityAccessibilityNeeds || '').toLowerCase();
+  var disOpt, disLbl;
+  var bothChannels = strHas(an, 'both') || strHas(can, 'both') ||
+                     (strHas(an, 'yes') && strHas(can, 'yes'));
+  var anyYes = strHas(an, 'yes') || strHas(can, 'yes');
+  if (bothChannels) {
+    disOpt = 'Inclusive';
+    disLbl = 'Accommodations planned for both online and in-person activities.';
+  } else if (anyYes) {
+    disOpt = 'Accessible';
+    var channel = strHas(an, 'online') || strHas(can, 'online') ? 'online / virtual' : 'in-person';
+    disLbl = 'Accommodations planned for ' + channel + ' activities.';
+  } else if (an || can) {
+    disOpt = 'Not addressed';
+    disLbl = 'No accessibility accommodations indicated.';
+  } else {
+    disOpt = 'Not assessable';
+    disLbl = 'Accessibility fields not provided.';
+  }
+  rows.push({ lensName: 'Disability Inclusion', selectedOption: disOpt, selectedLabel: disLbl });
+
+  // ---- 6. Financial Sustainability ---------------------------------------
+  var pw = String(data.pathway || '').toLowerCase();
+  var md = String(data.maintenanceDuration || '').toLowerCase();
+  var mf = Array.isArray(data.maintenanceFunding) ? data.maintenanceFunding : [];
+  var hasRevenueFunding = arrHas(mf, 'revenue') || arrHas(mf, 'self');
+  var sustOpt, sustLbl;
+  if (!pw && !md) {
+    sustOpt = 'Plan unclear';
+    sustLbl = 'Sustainability fields not provided.';
+  } else if (strHas(pw, 'revenue') ||
+             (strHas(md, 'perpetual') && hasRevenueFunding)) {
+    sustOpt = 'Self-sustaining';
+    sustLbl = 'Revenue-generating model' +
+      (hasRevenueFunding ? '; maintenance funded from revenue.' :
+       strHas(md, 'perpetual') ? '; maintenance designed to be perpetual.' : '.');
+  } else if (strHas(pw, 'blended') || strHas(pw, 'hybrid')) {
+    sustOpt = 'Hybrid';
+    sustLbl = 'Blended Model with revenue + public-good streams' +
+      (hasRevenueFunding ? '; maintenance funded from revenue.' : '.');
+  } else if (strHas(pw, 'community benefit') || strHas(pw, 'public')) {
+    if (hasRevenueFunding) {
+      sustOpt = 'Hybrid';
+      sustLbl = 'Community benefit model with some revenue in the maintenance funding mix.';
+    } else {
+      sustOpt = 'Grant-dependent';
+      sustLbl = 'Community Benefit model; no revenue identified in maintenance funding mix.';
+    }
+  } else {
+    sustOpt = 'Plan unclear';
+    sustLbl = 'Pathway/maintenance fields incomplete.';
+  }
+  rows.push({ lensName: 'Financial Sustainability', selectedOption: sustOpt, selectedLabel: sustLbl });
+
+  return rows;
+}
+
+/**
  * Helper: render a TNA radio level as a styled badge.
  * Maps beginner/intermediate/advanced/na to color-coded score-badge spans.
  */
@@ -70,17 +266,26 @@ function renderPDFTables(data) {
 
   /* ======================================================================
      SECTION 3: CROSS-CUTTING FOCUS LENSES TABLE
-     Expected array: [{lensName|name|label, selectedOption|option|value}]
-     Supports multiple field-name conventions for robust population.
+     Expected array: [{lensName|name|label, selectedOption|option|value, selectedLabel?}]
+     If the application has no explicit focusLenses array (real applicants
+     don't — there's no form UI for these), derive the six lenses from
+     fields the applicant has already provided. The walkthrough/sample
+     still wins because it provides focusLenses directly.
      ====================================================================== */
-  if (data.focusLenses && data.focusLenses.length > 0) {
+  var lensesToRender = (data.focusLenses && data.focusLenses.length > 0)
+    ? data.focusLenses
+    : deriveFocusLenses(data);
+  if (lensesToRender && lensesToRender.length > 0) {
     var flHtml = '';
-    data.focusLenses.forEach(function (row) {
-      var lens = v(row.lensName || row.name || row.label || row.lens || '');
-      var opt  = v(row.selectedOption || row.option || row.value || row.selected || '');
+    lensesToRender.forEach(function (row) {
+      var lens  = v(row.lensName || row.name || row.label || row.lens || '');
+      // Prefer the rich descriptive label when provided; fall back to the bare
+      // option code so legacy data renders something rather than nothing.
+      var optEl = row.selectedLabel || row.label_text ||
+                  row.selectedOption || row.option || row.value || row.selected || '';
       flHtml += '<tr>'
         + '<td>' + lens + '</td>'
-        + '<td>' + opt + '</td>'
+        + '<td>' + v(optEl) + '</td>'
         + '</tr>';
     });
     setHTML('focusLenses', flHtml);

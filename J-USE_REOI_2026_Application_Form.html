@@ -6600,6 +6600,27 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             const out = Object.assign({}, data);
             const sample = window._sampleSource || {};
 
+            // ---- Labelize NbCS Primary + Secondary so the PDF shows the friendly
+            //      label (e.g. "Early Warning Systems") instead of the raw value
+            //      code (e.g. "drr_early_warning"). ----
+            function labelizeArray(name, codes) {
+                if (!Array.isArray(codes)) return codes;
+                return codes.map(function (code) {
+                    var cb = document.querySelector('input[name="' + name + '"][value="' + code + '"]');
+                    if (!cb) return code;
+                    var lbl = cb.closest('label');
+                    if (!lbl) return code;
+                    var clone = lbl.cloneNode(true);
+                    var inp = clone.querySelector('input');
+                    if (inp) inp.remove();
+                    var desc = clone.querySelector('.checkbox-item-description');
+                    if (desc) desc.remove();
+                    return clone.textContent.trim();
+                });
+            }
+            out.nbcsIntervention = labelizeArray('nbcsIntervention', out.nbcsIntervention);
+            out.nbcsSecondary    = labelizeArray('nbcsSecondary',    out.nbcsSecondary);
+
             // ---- Outcome Metrics (form: outcomeName[]/Baseline[]/Expected[]/Measured[]) ----
             const omNames = Array.from(document.querySelectorAll('input[name="outcomeName[]"]')).map(i => i.value.trim());
             const omBase  = Array.from(document.querySelectorAll('input[name="outcomeBaseline[]"]')).map(i => i.value.trim());

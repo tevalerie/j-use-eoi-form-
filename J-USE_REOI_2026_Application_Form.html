@@ -6600,26 +6600,46 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             const out = Object.assign({}, data);
             const sample = window._sampleSource || {};
 
-            // ---- Labelize NbCS Primary + Secondary so the PDF shows the friendly
-            //      label (e.g. "Early Warning Systems") instead of the raw value
-            //      code (e.g. "drr_early_warning"). ----
+            // ---- Labelize all coded form fields so the PDF shows friendly labels
+            //      (e.g. "NGO / Civil Society") instead of raw value codes
+            //      (e.g. "ngo-society"). Covers NbCS interventions, multi-select
+            //      checkbox arrays, and single-value selects/radios. ----
+            function getLabelForValue(name, value) {
+                if (value === null || value === undefined || value === '') return value;
+                // Try select option first
+                var opt = document.querySelector('select[name="' + name + '"] option[value="' + value + '"]');
+                if (opt) return (opt.textContent || '').trim();
+                // Then radio/checkbox label
+                var inp = document.querySelector('input[name="' + name + '"][value="' + value + '"]');
+                if (!inp) return value;
+                var lbl = inp.closest('label');
+                if (!lbl) return value;
+                var clone = lbl.cloneNode(true);
+                // Strip the input and any decorative children (descriptions, tooltips, count badges)
+                var strip = clone.querySelectorAll('input, .checkbox-item-description, .tooltip, .tooltip-icon, .nbcs-card-count, .nbcs-card-recommended');
+                strip.forEach(function (el) { el.remove(); });
+                return clone.textContent.replace(/\s+/g, ' ').trim();
+            }
+            function labelizeOne(name, value) { return getLabelForValue(name, value); }
             function labelizeArray(name, codes) {
                 if (!Array.isArray(codes)) return codes;
-                return codes.map(function (code) {
-                    var cb = document.querySelector('input[name="' + name + '"][value="' + code + '"]');
-                    if (!cb) return code;
-                    var lbl = cb.closest('label');
-                    if (!lbl) return code;
-                    var clone = lbl.cloneNode(true);
-                    var inp = clone.querySelector('input');
-                    if (inp) inp.remove();
-                    var desc = clone.querySelector('.checkbox-item-description');
-                    if (desc) desc.remove();
-                    return clone.textContent.trim();
-                });
+                return codes.map(function (c) { return getLabelForValue(name, c); });
             }
-            out.nbcsIntervention = labelizeArray('nbcsIntervention', out.nbcsIntervention);
-            out.nbcsSecondary    = labelizeArray('nbcsSecondary',    out.nbcsSecondary);
+            // Multi-value checkbox arrays
+            ['nbcsIntervention','nbcsSecondary','climateChallenge','hazards',
+             'copingMechanisms','targetGroups','socialBenefits','learningFormat',
+             'maintenanceFunding','priorityNeeds','systemFlows','hybridPublicGoods',
+             'genderConsiderations'].forEach(function (f) {
+                out[f] = labelizeArray(f, out[f]);
+            });
+            // Single-value selects and radios (incl. Section 5 model-qualifying selects)
+            ['regType','orgCategory','orgParish','parish','classification',
+             'contactGender','marketCustomer','marketRevenue','marketOMCoverage',
+             'hybridAnchorPartner','publicAgencyAdopt','publicNDCAlign',
+             'maintenanceDuration','accessibilityNeeds','capacityAccessibilityNeeds',
+             'pathway','housingVulnerability'].forEach(function (f) {
+                if (out[f]) out[f] = labelizeOne(f, out[f]);
+            });
 
             // ---- Outcome Metrics (form: outcomeName[]/Baseline[]/Expected[]/Measured[]) ----
             const omNames = Array.from(document.querySelectorAll('input[name="outcomeName[]"]')).map(i => i.value.trim());
@@ -6640,7 +6660,17 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             else if (Array.isArray(sample.outcomeMetrics)) out.outcomeMetrics = sample.outcomeMetrics;
 
             // ---- Benefit Traceability (form: trSector[]/trGroups[]/trHow[]) ----
-            const trSect  = Array.from(document.querySelectorAll('select[name="trSector[]"], input[name="trSector[]"]')).map(i => i.value.trim());
+            const trSectEls = document.querySelectorAll('select[name="trSector[]"], input[name="trSector[]"]');
+            const trSect  = Array.from(trSectEls).map(function (el) {
+                // Labelize the sector code (drr → "Disaster Risk Reduction" etc.)
+                var v = (el.value || '').trim();
+                if (!v) return '';
+                if (el.tagName === 'SELECT') {
+                    var opt = el.querySelector('option[value="' + v + '"]');
+                    return opt ? (opt.textContent || '').trim() : v;
+                }
+                return v;
+            });
             const trGrp   = Array.from(document.querySelectorAll('input[name="trGroups[]"]')).map(i => i.value.trim());
             const trHow   = Array.from(document.querySelectorAll('textarea[name="trHow[]"], input[name="trHow[]"]')).map(i => i.value.trim());
             const trRows = [];

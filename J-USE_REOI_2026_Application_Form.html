@@ -6629,6 +6629,11 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             }
             function labelizeOne(name, value) { return getLabelForValue(name, value); }
             function labelizeArray(name, codes) {
+                if (codes === null || codes === undefined || codes === '') return codes;
+                // Single-value case: when only ONE checkbox is ticked, FormData
+                // serialises the field as a string, not an array. Treat it as
+                // a one-element list so it still gets labelized.
+                if (typeof codes === 'string') return getLabelForValue(name, codes);
                 if (!Array.isArray(codes)) return codes;
                 return codes.map(function (c) { return getLabelForValue(name, c); });
             }

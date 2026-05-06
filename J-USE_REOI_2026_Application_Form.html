@@ -6644,12 +6644,16 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
              'genderConsiderations'].forEach(function (f) {
                 out[f] = labelizeArray(f, out[f]);
             });
-            // Single-value selects and radios (incl. Section 5 model-qualifying selects)
+            // Single-value selects and radios (incl. Section 5 model-qualifying selects).
+            // NOTE: pathway and housingVulnerability are EXCLUDED here because
+            // pdf-sections.js has its own pre-existing labelizer for both that
+            // expects the raw code ('market'/'hybrid'/'public', 'direct'/'partial'/'no').
+            // Running our labelize on them would feed the renderer a label and
+            // break those existing branches → "Not provided" rendering.
             ['regType','orgCategory','orgParish','parish','classification',
              'contactGender','marketCustomer','marketRevenue','marketOMCoverage',
              'hybridAnchorPartner','publicAgencyAdopt','publicNDCAlign',
-             'maintenanceDuration','accessibilityNeeds','capacityAccessibilityNeeds',
-             'pathway','housingVulnerability'].forEach(function (f) {
+             'maintenanceDuration','accessibilityNeeds','capacityAccessibilityNeeds'].forEach(function (f) {
                 if (out[f]) out[f] = labelizeOne(f, out[f]);
             });
 

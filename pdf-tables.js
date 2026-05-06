@@ -47,6 +47,10 @@ function deriveFocusLenses(data) {
     return isFinite(n) ? n : null;
   }
   function arrHas(arr, needle) {
+    // Tolerate single-string serialisations: when an applicant ticks only
+    // one box in a multi-select, FormData stores the field as a string,
+    // not an array. Treat it as a 1-element list.
+    if (typeof arr === 'string') arr = arr ? [arr] : [];
     if (!Array.isArray(arr)) return false;
     var n = String(needle).toLowerCase();
     return arr.some(function (s) { return String(s).toLowerCase().indexOf(n) >= 0; });
@@ -79,7 +83,10 @@ function deriveFocusLenses(data) {
   rows.push({ lensName: 'Climate Additionality', selectedOption: addOpt, selectedLabel: addLbl });
 
   // ---- 2. Gender ----------------------------------------------------------
-  var gc = Array.isArray(data.genderConsiderations) ? data.genderConsiderations : [];
+  // genderConsiderations may arrive as array or single-string (FormData quirk
+  // when only one box is ticked).
+  var gcRaw = data.genderConsiderations;
+  var gc = Array.isArray(gcRaw) ? gcRaw : (typeof gcRaw === 'string' && gcRaw ? [gcRaw] : []);
   var gcCount = gc.length;
   var hasWomenLed     = arrHas(gc, 'women-led') || arrHas(gc, 'women-majority');
   var hasTargetedWomen= arrHas(gc, 'targeted activities for women');
@@ -193,7 +200,7 @@ function deriveFocusLenses(data) {
   if (!pw && !md) {
     sustOpt = 'Plan unclear';
     sustLbl = 'Sustainability fields not provided.';
-  } else if (strHas(pw, 'revenue') ||
+  } else if (strHas(pw, 'revenue') || strHas(pw, 'market') ||
              (strHas(md, 'perpetual') && hasRevenueFunding)) {
     sustOpt = 'Self-sustaining';
     sustLbl = 'Revenue-generating model' +

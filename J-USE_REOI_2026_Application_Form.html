@@ -3615,9 +3615,9 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         </div>
                     </div>
 
-                    <h3>Enablers Required/Utilized (select all that apply)</h3>
+                    <h3>Enablers Required/Utilized <span class="mandatory">*</span> <span style="font-size:13px; font-weight:400; color:#666;">(select at least 2)</span></h3>
                     <div class="guidance-note">
-                        <strong>What support does your project need or already have?</strong> Select all that are relevant to your project's success.
+                        <strong>What support does your project need or already have?</strong> Select <strong>at least 2 enablers</strong> relevant to your project's success. For each one you select, set the Status (Already Have / Still Need) and add a brief Note.
                     </div>
                     
                     <div class="grid-2">
@@ -5849,6 +5849,10 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                 }
                 // Validate enabler status and notes for each selected enabler
                 const selectedEnablers = document.querySelectorAll('input[name="enablers"]:checked');
+                if (selectedEnablers.length < 2) {
+                    isValid = false;
+                    errors.push('Implementation Enablers: Please select at least 2 enablers');
+                }
                 selectedEnablers.forEach(cb => {
                     const val = cb.value;
                     const statusEl = document.querySelector(`[name="enablerStatus_${val}"]`);
@@ -6191,6 +6195,9 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         if (step === 6) {
                             // Validate enabler notes are filled for all selected enablers
                             const submitEnablers = document.querySelectorAll('input[name="enablers"]:checked');
+                            if (submitEnablers.length < 2) {
+                                allErrors.push('Implementation Enablers: Please select at least 2 enablers');
+                            }
                             submitEnablers.forEach(cb => {
                                 const val = cb.value;
                                 const statusEl = document.querySelector(`[name="enablerStatus_${val}"]`);

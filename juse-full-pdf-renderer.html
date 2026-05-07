@@ -1848,7 +1848,20 @@
 
       if (event.data.type === 'render') {
         try {
-          renderFullApplicationPDF(event.data.data || {});
+          var renderData = event.data.data || {};
+          renderFullApplicationPDF(renderData);
+
+          // Set document.title so Chrome's PDF engine bakes a useful "Title"
+          // into the PDF metadata at print time. Without this every saved PDF
+          // gets the static page title; with it, each ref/org gets its own.
+          // Format: "J-USE REOI 2026 — JUSE-2026-XXXXXX — Org Name"
+          var ref = renderData.ref_number || renderData.referenceNumber || '';
+          var org = renderData.orgName || '';
+          var titleParts = ['J-USE REOI 2026'];
+          if (ref) titleParts.push(ref);
+          if (org) titleParts.push(org);
+          document.title = titleParts.join(' — ');
+
           // Tell the parent we're populated and ready for either print or
           // a deferred trigger.
           setTimeout(function () {

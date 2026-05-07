@@ -6395,6 +6395,15 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                     baseData.ref_number     = window._reservedRefNumber;
                     baseData.referenceNumber = window._reservedRefNumber;
                 }
+                // Capture the exact moment the PDF is rendered. This same ISO string
+                // is baked into the visible PDF footer ("Generated on … at …") AND
+                // persisted on window._submissionData so the final submission POST
+                // carries it back to the backend — re-renders can then reproduce the
+                // ORIGINAL "Generated on …" timestamp byte-for-byte.
+                baseData.generationTimestamp = new Date().toISOString();
+                if (window._submissionData) {
+                    window._submissionData.generationTimestamp = baseData.generationTimestamp;
+                }
                 await printApplicationViaIframe(enrichDataForRenderer(baseData));
                 // Move to step 2
                 document.getElementById('paStep1').style.display = 'none';
@@ -6511,6 +6520,7 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             // Open camera-ready print preview so user can re-save the PDF
             try {
                 const data = collectFormDataAsObject();
+                data.generationTimestamp = new Date().toISOString();
                 await printApplicationViaIframe(data);
             } catch (e) {
                 alert('Could not open print preview. Please use your browser\'s File → Print menu directly.\n\nError: ' + e.message);
@@ -6533,7 +6543,9 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             const btn = document.getElementById('downloadPdfBtn');
             if (btn) { btn.disabled = true; btn.textContent = '⏳ Opening print preview…'; }
             try {
-                const data = enrichDataForRenderer(collectFormDataAsObject());
+                const raw = collectFormDataAsObject();
+                raw.generationTimestamp = new Date().toISOString();
+                const data = enrichDataForRenderer(raw);
                 await printApplicationViaIframe(data);
             } catch (e) {
                 console.warn(e);
@@ -6948,6 +6960,26 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         timeZone: 'America/Jamaica'
                     });
                 }
+            })();
+
+            // ---- Generation date/time — derive from generationTimestamp (set
+            //      by paOpenPrintDialog at the exact moment of PDF render). The
+            //      renderer's footer reads data.generationDate / generationTime;
+            //      without this, pdf-core.js falls back to browser-local "now"
+            //      which can drift on re-renders and ignores Jamaica TZ. ----
+            (function () {
+                if (!out.generationTimestamp) return;
+                var d;
+                try { d = new Date(out.generationTimestamp); } catch (e) { return; }
+                if (isNaN(d.getTime())) return;
+                out.generationDate = d.toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric',
+                    timeZone: 'America/Jamaica'
+                });
+                out.generationTime = d.toLocaleTimeString('en-US', {
+                    hour: 'numeric', minute: '2-digit', hour12: true,
+                    timeZone: 'America/Jamaica'
+                });
             })();
 
             return out;

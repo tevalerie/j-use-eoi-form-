@@ -6653,7 +6653,8 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             ['regType','orgCategory','orgParish','parish','classification',
              'contactGender','marketCustomer','marketRevenue','marketOMCoverage',
              'hybridMarketPct','hybridAnchorPartner','publicAgencyAdopt','publicNDCAlign',
-             'maintenanceDuration','accessibilityNeeds','capacityAccessibilityNeeds'].forEach(function (f) {
+             'maintenanceDuration','accessibilityNeeds','capacityAccessibilityNeeds',
+             'benefitIntensity','benefitTiming'].forEach(function (f) {
                 if (out[f]) out[f] = labelizeOne(f, out[f]);
             });
 
@@ -6692,19 +6693,30 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             const trRows = [];
             // Pull outcome labels from the matching outcomeMetrics rows
             const outcomeLabels = (out.outcomeMetrics || []).map(o => o.outcomeName);
+            // Pre-build a lookup so each benefit-traceability row's
+            // 'verification' column gets the matching outcome's how_measured
+            // text (the form has no per-row verification field; this column
+            // would otherwise always render 'Not provided').
+            const verifByOutcome = {};
+            (out.outcomeMetrics || []).forEach(function (om) {
+                var n = String(om.outcomeName || '').trim();
+                if (n) verifByOutcome[n] = om.outcomeMeasured || '';
+            });
             for (let i = 0; i < Math.max(trSect.length, trGrp.length, trHow.length); i++) {
                 const sect = trSect[i] || '';
                 const grp  = trGrp[i]  || '';
                 const how  = trHow[i]  || '';
                 if (!sect && !grp && !how) continue;
+                const outcomeLabel = outcomeLabels[i] || '';
                 trRows.push({
-                    outcomeLabel: outcomeLabels[i] || '',
+                    outcomeLabel: outcomeLabel,
                     sector:       sect,
                     groups:       grp,
                     how:          how,
                     intensity:    out.benefitIntensity || '',
                     timing:       out.benefitTiming || '',
-                    verification: ''
+                    verification: verifByOutcome[outcomeLabel] ||
+                                  ((out.outcomeMetrics || [])[i] || {}).outcomeMeasured || ''
                 });
             }
             if (trRows.length) out.benefitTraceability = trRows;
@@ -6894,6 +6906,20 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             };
             if (Array.isArray(out.capacityBuildingNeeds)) {
                 out.capacityBuildingNeeds = out.capacityBuildingNeeds.map(c => capLabels[c] || c);
+            }
+            // The 'Priority Capacity Building Needs' sub-section in the renderer
+            // reads data.capacityBuildingNeeds. The form has no UI for that
+            // field — alias from priorityNeeds (which IS user-entered) so the
+            // sub-section renders the actual selections instead of 'Not provided'.
+            if (!out.capacityBuildingNeeds && out.priorityNeeds) {
+                out.capacityBuildingNeeds = out.priorityNeeds;
+            }
+            // The 'Preferred Learning Formats' sub-section reads
+            // data.preferredLearningFormats (also no form UI). Alias from
+            // learningFormat (user-entered multi-select) so it renders real
+            // data instead of 'Not provided'.
+            if (!out.preferredLearningFormats && out.learningFormat) {
+                out.preferredLearningFormats = out.learningFormat;
             }
 
             // ---- Submission date/time — derive from submittedAt if not already set.

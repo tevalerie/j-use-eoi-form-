@@ -1854,13 +1854,16 @@
           // Set document.title so Chrome's PDF engine bakes a useful "Title"
           // into the PDF metadata at print time. Without this every saved PDF
           // gets the static page title; with it, each ref/org gets its own.
-          // Format: "J-USE REOI 2026 — JUSE-2026-XXXXXX — Org Name"
+          // Format: "JUSE-2026-XXXXXX — Org Name"
+          // (ref already contains "JUSE-2026", so no extra prefix needed.)
           var ref = renderData.ref_number || renderData.referenceNumber || '';
           var org = renderData.orgName || '';
-          var titleParts = ['J-USE REOI 2026'];
+          var titleParts = [];
           if (ref) titleParts.push(ref);
           if (org) titleParts.push(org);
-          document.title = titleParts.join(' — ');
+          document.title = titleParts.length
+            ? titleParts.join(' — ')
+            : 'J-USE REOI 2026';
 
           // Tell the parent we're populated and ready for either print or
           // a deferred trigger.

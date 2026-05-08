@@ -6695,6 +6695,17 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             const out = Object.assign({}, data);
             const sample = window._sampleSource || {};
 
+            // Strip File objects from the flat data — FormData iteration in
+            // collectFormDataAsObject() captures file inputs as File objects,
+            // which the renderer's setField stringifies to "[object File]".
+            // The four file fields are rendered separately via the
+            // documents[] array further down (built explicitly from
+            // input.files[0].name), so deleting them here is safe and
+            // prevents the "Organizational Capacity [object File]" bug.
+            ['regCertificate','orgCapacity','budgetBreakdown','letterOfIntent'].forEach(function (f) {
+                delete out[f];
+            });
+
             // ---- Labelize all coded form fields so the PDF shows friendly labels
             //      (e.g. "NGO / Civil Society") instead of raw value codes
             //      (e.g. "ngo-society"). Covers NbCS interventions, multi-select

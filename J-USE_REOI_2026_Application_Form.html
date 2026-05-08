@@ -3413,7 +3413,7 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         <p style="font-size: 13px; margin-bottom: 20px; color: #555;">These questions help us understand your revenue model and readiness for market financing.</p>
                         
                         <div class="form-group">
-                            <label>Who is your primary customer or off-taker?
+                            <label>Who is your primary customer or off-taker? <span class="mandatory">*</span>
                                 <span class="tooltip" data-tooltip="Who will pay for your products or services? An off-taker is a buyer (individual, business, or institution) who commits to purchasing your project's output on a regular basis — for example, a hotel that agrees to buy vegetables weekly from your community farm, or a municipality that pays for stormwater management services."><span class="tooltip-icon">?</span></span>
                             </label>
                             <select name="marketCustomer" onchange="toggleMarketCustomerOther(this.value)">
@@ -3434,7 +3434,7 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         </div>
                         
                         <div class="form-group">
-                            <label>Estimated Annual Revenue Potential (JMD)
+                            <label>Estimated Annual Revenue Potential (JMD) <span class="mandatory">*</span>
                                 <span class="tooltip" data-tooltip="Realistic estimate of annual sales or fees once the project is fully operational."><span class="tooltip-icon">?</span></span>
                             </label>
                             <select name="marketRevenue">
@@ -3448,7 +3448,7 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         </div>
                         
                         <div class="form-group">
-                            <label>Can revenues cover Operations and Management (O&M) costs within 5-7 years?
+                            <label>Can revenues cover Operations and Management (O&M) costs within 5-7 years? <span class="mandatory">*</span>
                                 <span class="tooltip" data-tooltip="Operations and Management (O&M) costs include salaries, supplies, repairs, utilities. Can your projected revenue cover these ongoing costs?"><span class="tooltip-icon">?</span></span>
                             </label>
                             <select name="marketOMCoverage">
@@ -3467,7 +3467,7 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         <p style="font-size: 13px; margin-bottom: 20px; color: #555;">Blended finance projects combine revenue generation with public goods. These questions help us understand both aspects of your sustainability model.</p>
                         
                         <div class="form-group">
-                            <label>What percentage of costs could be covered by market revenue?
+                            <label>What percentage of costs could be covered by market revenue? <span class="mandatory">*</span>
                                 <span class="tooltip" data-tooltip="If your project generates some revenue, what portion of total costs could it cover?"><span class="tooltip-icon">?</span></span>
                             </label>
                             <select name="hybridMarketPct">
@@ -3492,7 +3492,7 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         </div>
                         
                         <div class="form-group">
-                            <label>Have you identified an anchor public partner or off-taker?
+                            <label>Have you identified an anchor public partner or off-taker? <span class="mandatory">*</span>
                                 <span class="tooltip" data-tooltip="An anchor partner is a government agency, large organization, or institution that commits to supporting or purchasing from your project on an ongoing basis — for example, a parish council that signs an MOU to maintain a green corridor, or a hotel chain that commits to buying produce."><span class="tooltip-icon">?</span></span>
                             </label>
                             <select name="hybridAnchorPartner">
@@ -3523,7 +3523,7 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         </div>
                         
                         <div class="form-group">
-                            <label>Is a public agency willing to adopt or maintain this project?
+                            <label>Is a public agency willing to adopt or maintain this project? <span class="mandatory">*</span>
                                 <span class="tooltip" data-tooltip="For public goods to be sustainable, a government agency often needs to take responsibility for long-term maintenance."><span class="tooltip-icon">?</span></span>
                             </label>
                             <select name="publicAgencyAdopt">
@@ -3536,7 +3536,7 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         </div>
                         
                         <div class="form-group">
-                            <label>How does this project align with Jamaica's Nationally Determined Contribution (NDC) / National Adaptation Plan (NAP) priorities?
+                            <label>How does this project align with Jamaica's Nationally Determined Contribution (NDC) / National Adaptation Plan (NAP) priorities? <span class="mandatory">*</span>
                                 <span class="tooltip" data-tooltip="NDC = Nationally Determined Contribution (climate commitments). NAP = National Adaptation Plan. Projects aligned with national priorities are more likely to receive government support."><span class="tooltip-icon">?</span></span>
                             </label>
                             <select name="publicNDCAlign">
@@ -6212,7 +6212,38 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                             }
                         }
                         if (step === 5) {
-                            if (!document.querySelector('input[name="pathway"]:checked')) allErrors.push('Value Proposition: Select a Value Proposition');
+                            var selectedPathway = document.querySelector('input[name="pathway"]:checked');
+                            if (!selectedPathway) {
+                                allErrors.push('Value Proposition: Select a Value Proposition');
+                            } else {
+                                // Each pathway has 3 qualifying questions that the EFJ
+                                // review team uses to assess viability. They are mandatory
+                                // for the selected pathway only — applicants who pick
+                                // 'market' don't see hybrid/public questions, etc.
+                                var pwVal = selectedPathway.value;
+                                if (pwVal === 'market') {
+                                    var mc = document.querySelector('[name="marketCustomer"]');
+                                    var mr = document.querySelector('[name="marketRevenue"]');
+                                    var mo = document.querySelector('[name="marketOMCoverage"]');
+                                    if (!mc || !mc.value) allErrors.push('Value Proposition: Select primary customer / off-taker (Market pathway)');
+                                    if (!mr || !mr.value) allErrors.push('Value Proposition: Select estimated annual revenue (Market pathway)');
+                                    if (!mo || !mo.value) allErrors.push('Value Proposition: Indicate Operations & Management coverage (Market pathway)');
+                                }
+                                if (pwVal === 'hybrid') {
+                                    var hp = document.querySelector('[name="hybridMarketPct"]');
+                                    var ha = document.querySelector('[name="hybridAnchorPartner"]');
+                                    if (!hp || !hp.value) allErrors.push('Value Proposition: Select % of costs covered by market revenue (Hybrid pathway)');
+                                    if (document.querySelectorAll('input[name="hybridPublicGoods"]:checked').length === 0) allErrors.push('Value Proposition: Select at least one Public Good (Hybrid pathway)');
+                                    if (!ha || !ha.value) allErrors.push('Value Proposition: Indicate anchor partner status (Hybrid pathway)');
+                                }
+                                if (pwVal === 'public') {
+                                    var pa = document.querySelector('[name="publicAgencyAdopt"]');
+                                    var pn = document.querySelector('[name="publicNDCAlign"]');
+                                    if (document.querySelectorAll('input[name="publicBeneficiaries"]:checked').length === 0) allErrors.push('Value Proposition: Select at least one Public Beneficiary (Public pathway)');
+                                    if (!pa || !pa.value) allErrors.push('Value Proposition: Indicate public agency adoption (Public pathway)');
+                                    if (!pn || !pn.value) allErrors.push('Value Proposition: Indicate NDC alignment (Public pathway)');
+                                }
+                            }
                         }
                         if (step === 6) {
                             // Validate enabler notes are filled for all selected enablers

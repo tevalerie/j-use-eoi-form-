@@ -6846,6 +6846,23 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             //      Build the structured array from those individual fields,
             //      falling back to sample.enablersDetail if the form has none.
             if (!Array.isArray(out.enablersDetail)) {
+                // Static label dict — used as fallback when DOM lookup of
+                // <strong> text returns null (e.g., stale cache, markup
+                // restructure, sample-data prefill). Without this, the saved
+                // PDF's Section 6 headers showed raw codes like
+                // "blended_finance" instead of "Blended Finance Structure".
+                const ENABLER_LABELS = {
+                    'policy':              'Policy/Regulatory Support',
+                    'blended_finance':     'Blended Finance Structure',
+                    'technical_capacity':  'Technical Capacity Building',
+                    'community_governance':'Community Governance Model',
+                    'market_platform':     'Market Aggregation Platform',
+                    'data_systems':        'Data/Knowledge Systems',
+                    'fast_track':          'Fast-Track Permitting',
+                    'insurance':           'Climate Risk Insurance',
+                    'certification':       'NbCS Certification Standard',
+                    'south_south':         'South-South Knowledge Exchange'
+                };
                 const checked = Array.from(document.querySelectorAll('input[name="enablers"]:checked'));
                 if (checked.length > 0) {
                     out.enablersDetail = checked.map(cb => {
@@ -6858,9 +6875,16 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                             rawStatus === 'have' ? 'Already Have' :
                             rawStatus === 'need' ? 'Still Need' :
                             rawStatus;
+                        // Resolve enabler label: DOM text first (catches any
+                        // future label tweaks), static dict fallback, then
+                        // raw code as last resort.
+                        const enablerLabel =
+                            (labelEl && labelEl.textContent.trim()) ||
+                            ENABLER_LABELS[cb.value] ||
+                            cb.value;
                         return {
                             enablerName:  cb.value,
-                            enablerLabel: labelEl ? labelEl.textContent.trim() : cb.value,
+                            enablerLabel: enablerLabel,
                             status:       statusLabel,
                             notes:        notesEl  ? notesEl.value  : ''
                         };

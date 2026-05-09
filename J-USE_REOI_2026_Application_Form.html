@@ -1929,7 +1929,7 @@
         <!-- Draft toolbar — auto-save indicator + manual export/import -->
         <div class="draft-toolbar" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:10px 16px; background:#f5f9f7; border-bottom:1px solid #e0e8e3; font-size:13px;">
             <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-                <span id="autoSaveIndicator" style="color:#2E8B57; opacity:0.7; transition:opacity 0.3s;">💾 Auto-save active (every 30s)</span>
+                <span id="autoSaveIndicator" style="color:#b56500; opacity:0.85; transition:opacity 0.3s;">⚠ Auto-save paused — please click Save Draft manually before leaving</span>
             </div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 <button type="button" onclick="prefillTestData()" title="Load a worked example (Hybrid Community Farm) so you can see how a complete application looks. You must clear and replace every field with your own organisation's data before submitting." style="background:#fff8e1; border:1px solid #f0ad4e; color:#b56500; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600;">📋 See Worked Example</button>
@@ -7217,8 +7217,11 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                 }
             } catch (e) { /* silent */ }
         }
-        setInterval(autoSaveDraft, 30000);
-        window.addEventListener('beforeunload', autoSaveDraft);
+        // Auto-save TEMPORARILY DISABLED 2026-05-09 to isolate a draft-import
+        // bug where applicants couldn't restore from a saved JSON. Re-enable
+        // after the deadline by uncommenting the two lines below.
+        // setInterval(autoSaveDraft, 30000);
+        // window.addEventListener('beforeunload', autoSaveDraft);
 
         // Read selected files from <input type="file"> as base64 (no data: prefix).
         function readFileInputsAsBase64(names) {

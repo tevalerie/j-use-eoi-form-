@@ -6004,6 +6004,14 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
                         if (!all.length) return;
                         const first = all[0];
 
+                        // Skip file inputs entirely — browsers reject any
+                        // programmatic value assignment except empty string.
+                        // Older drafts may still contain "{}" entries from
+                        // pre-fix autoSaveDraft; if we don't skip here, the
+                        // first such entry throws and halts the rest of the
+                        // prefill.
+                        if (first.type === 'file') return;
+
                         if (first.type === 'checkbox' || first.type === 'radio') {
                             const values = Array.isArray(data[key]) ? data[key] : [data[key]];
                             const stringValues = values.map(String);
@@ -6637,6 +6645,12 @@ Projects must be implemented in URBAN areas within the following parishes. Rural
             const formData = new FormData(document.getElementById('reoiForm'));
             const allData = {};
             formData.forEach(function (value, key) {
+                // Skip File objects (file inputs) — JSON.stringify turns them
+                // into "{}", which then crashes loadDraft when it tries to set
+                // a file input's value (browser security: file inputs only
+                // accept programmatic value="" assignment). Without this
+                // skip, autoSaveDraft re-introduces the crash every 30s.
+                if (typeof File !== 'undefined' && value instanceof File) return;
                 if (allData[key]) {
                     if (Array.isArray(allData[key])) allData[key].push(value);
                     else allData[key] = [allData[key], value];
